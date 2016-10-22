@@ -216,8 +216,12 @@
                 if (count == 2) {
                     var source = selectedNodes.getItem(0);
                     var target = selectedNodes.getItem(1);
-                    var links = this._topo.getLinksByNode(source.id(), target.id());
-                    this._topo.removeLink();
+                    var topo = this._topo;
+                    var links = topo.getLinksByNode(source.id(), target.id());debugger;
+                    nx.each(links, function (link) {
+                        topo.removeLink(link);
+                    });
+                    
                 }
             }
 
