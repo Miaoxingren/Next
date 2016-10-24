@@ -1,4 +1,4 @@
-(function(nx) {
+(function(nx, global) {
     nx.define("lynx.Nav", nx.graphic.Topology.Nav, {
         view: function(view) {
             var addLinkMode = {
@@ -31,14 +31,38 @@
                     'touchstart': '{#_switchDeleteLinkMode}'
                 }
             };
+            var editLinkMode = {
+                name: 'editLinkMode',
+                tag: 'li',
+                content: {
+                    props: {
+                        'class': 'n-icon-aggregation',
+                        title: "Edit Link mode"
+                    },
+                    tag: 'span'
+                },
+                events: {
+                    'mousedown': '{#_switcheEditLinkMode}',
+                    'touchstart': '{#_switcheEditLinkMode}'
+                }
+            };
             var mode = view.content[0].content[0].content;
             if (mode.name === 'mode') {
                 mode.content.push(addLinkMode);
                 mode.content.push(deleteLinkMode);
+                mode.content.push(editLinkMode);
             }
             return view;
         },
         methods: {
+            _switcheEditLinkMode: function(sender, event) {
+                var topo = this.topology();
+                var currentSceneName = topo.currentSceneName();
+                if (currentSceneName != 'editLink') {
+                    topo.activateScene('editLink');
+                    this._prevSceneName = currentSceneName;
+                }
+            },
             _switchAddLinkMode: function(sender, event) {
                 var topo = this.topology();
                 var currentSceneName = topo.currentSceneName();
@@ -254,7 +278,130 @@
         }
     });
 
-})(nx);
+    nx.define('lynx.EditLinkScene', nx.graphic.Topology.DefaultScene, {
+        properties: {
+            switchPanelClass: {
+                value: 'lynx.SwitchPanel'
+            },
+            switchPanel: {},
+            showSwitchPanel: {
+                value: true
+            },
+        },
+        methods: {
+            activate: function() {
+                this.inherited();
+                var tooltipManager = this._tooltipManager;
+                tooltipManager.activated(false);
+            },
+            deactivate: function() {
+                this.inherited();
+                var tooltipManager = this._tooltipManager;
+                tooltipManager.activated(true);
+            },
+            pressLink: function(sender, link) {
+
+            },
+            openSwitchPanel: function (link) {
+                var topo = this.topology();
+                var switchPanel = this.switchPanel();
+                var content;
+
+                switchPanel.close(true);
+
+                if (this.showSwitchPanel() === false) {
+                    return;
+                }
+
+                var contentClass = nx.path(global, this.switchPanelClass());
+                if (contentClass) {
+                    content = new contentClass();
+                    content.sets({
+                        topology: topo,
+                        link: link,
+                        model: topo.model()
+                    });
+                }
+
+                if (content) {
+                    switchPanel.content(null);
+                    content.attach(switchPanel);
+                }
+
+                var size = node.getBound(true);
+
+                switchPanel.open({
+                    target: pos,
+                    offset: Math.max(size.height, size.width) / 2
+                });
+
+                this.fire("openNodeToolTip", node);
+            },
+            clickLink: function(sender, link) {
+
+            },
+            enterLink: function(sender, link) {
+
+            },
+            leaveLink: function(sender, link) {
+
+            }
+        }
+    });
+
+    nx.define('lynx.SwitchPanel', nx.ui.Component, {
+        properties: {
+            visible: {
+                get: function () {
+                    return this._visible !== undefined ? this._visible : true;
+                },
+                set: function (value) {
+                    if (this.view()) {
+                        if (value) {
+                            this.view().dom().removeClass('n-hidden');
+                        } else {
+                            this.view().dom().addClass('n-hidden');
+                        }
+
+                    }
+                    this._visible = value;
+                }
+            },
+            node: {
+                set: function (value) {
+                    var model = value.model();
+                    this.view('list').set('items', new nx.data.Dictionary(model.getData()));
+                    this.title(value.label());
+                }
+            },
+            topology: {},
+            title: {}
+            _sourceId: null,
+            _targetId: null
+        },
+        view: {
+            content: [{
+                tag: 'div',
+                props: {
+                    'class': 'btn btn-default'
+                },
+                content: [],
+                events: {}
+            }, {
+                tag: 'div',
+                props: {
+                    'class': 'btn btn-default'
+                },
+                content: [],
+                events: {}
+            }]
+        },
+        methods: {
+
+        }
+    });
+
+})(nx, nx.global);
 
 window.onload = function() {
     var topologyData = {
@@ -311,5 +458,6 @@ window.onload = function() {
     topology.data(topologyData);
     topology.registerScene("addLink", "lynx.AddLinkScene");
     topology.registerScene("deleteLink", "lynx.DeleteLinkScene");
+    topology.registerScene("editLink", "lynx.EditLinkScene");
     topology.attach(app);
 };
