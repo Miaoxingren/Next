@@ -67,7 +67,7 @@
                 var topo = this.topology();
                 topo.watch('currentSceneName', function(prop, currentSceneName) {
                     var modes = this.view("mode").get("content");
-                    nx.each(modes, function (mode) {
+                    nx.each(modes, function(mode) {
                         var name = mode._resources["@name"];
                         if (currentSceneName + "Mode" === name || (currentSceneName === 'default' && name === 'moveMode')) {
                             this.view(name).dom().addClass("n-topology-nav-mode-selected");
@@ -153,16 +153,20 @@
                     this._topo.selectedNodes().remove(node);
                 }
             },
-            _createLink: function () {
+            _createLink: function() {
                 var selectedNodes = this.selectedNodes();
-                var count = this._topo.selectedNodes().count();
+                var topo = this._topo;
+                var count = topo.selectedNodes().count();
                 if (count == 2) {
                     var source = selectedNodes.getItem(0);
                     var target = selectedNodes.getItem(1);
-                    this._topo.addLink({
-                        source: source.id(),
-                        target: target.id()
-                    });
+                    var links = topo.getLinksByNode(source.id(), target.id());
+                    if (!links) {
+                        this._topo.addLink({
+                            source: source.id(),
+                            target: target.id()
+                        });
+                    }
                 }
             }
 
@@ -232,7 +236,7 @@
                     this._topo.selectedNodes().remove(node);
                 }
             },
-            _deleteLink: function () {
+            _deleteLink: function() {
                 var selectedNodes = this.selectedNodes();
                 var count = this._topo.selectedNodes().count();
                 if (count == 2) {
@@ -240,10 +244,10 @@
                     var target = selectedNodes.getItem(1);
                     var topo = this._topo;
                     var links = topo.getLinksByNode(source.id(), target.id());
-                    nx.each(links, function (link) {
+                    nx.each(links, function(link) {
                         topo.removeLink(link);
                     });
-                    
+
                 }
             }
 
@@ -294,6 +298,7 @@ window.onload = function() {
             label: 'model.name',
             iconType: 'model.iconType'
         },
+        supportMultipleLink: false,
         nodeSetConfig: {
             label: 'model.id',
             iconType: 'model.iconType',
