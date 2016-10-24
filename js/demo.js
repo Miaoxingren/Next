@@ -47,6 +47,13 @@
                     this._prevSceneName = currentSceneName;
                 }
             },
+            _switchMoveMode: function(sender, event) {
+                var topo = this.topology();
+                var currentSceneName = topo.currentSceneName();
+                if (currentSceneName != 'default') {
+                    topo.activateScene('default');
+                }
+            },
             _switchDeleteLinkMode: function(sender, event) {
                 var topo = this.topology();
                 var currentSceneName = topo.currentSceneName();
@@ -54,6 +61,21 @@
                     topo.activateScene('deleteLink');
                     this._prevSceneName = currentSceneName;
                 }
+            },
+            attach: function(args) {
+                this.inherited(args);
+                var topo = this.topology();
+                topo.watch('currentSceneName', function(prop, currentSceneName) {
+                    var modes = this.view("mode").get("content");
+                    nx.each(modes, function (mode) {
+                        var name = mode._resources["@name"];
+                        if (currentSceneName + "Mode" === name || (currentSceneName === 'default' && name === 'moveMode')) {
+                            this.view(name).dom().addClass("n-topology-nav-mode-selected");
+                        } else {
+                            this.view(name).dom().removeClass("n-topology-nav-mode-selected");
+                        }
+                    }, this);
+                }, this);
             }
         }
     });
@@ -217,7 +239,7 @@
                     var source = selectedNodes.getItem(0);
                     var target = selectedNodes.getItem(1);
                     var topo = this._topo;
-                    var links = topo.getLinksByNode(source.id(), target.id());debugger;
+                    var links = topo.getLinksByNode(source.id(), target.id());
                     nx.each(links, function (link) {
                         topo.removeLink(link);
                     });
